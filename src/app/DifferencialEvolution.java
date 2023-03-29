@@ -4,13 +4,17 @@ import model.Individual;
 
 import java.util.*;
 
+import static java.util.Arrays.asList;
+
 public class DifferencialEvolution {
-  private final int QTD_POP_INI = 20;
+  private final int QTD_POP = 20;
   private final double F = 0.5;
   private final double CROSSOVER_RATE = 0.5;
 
   private final int MAX_VALUE = 20;
   private final int MIN_VALUE = -20;
+  private final int MAX_GEN = 100;
+
   private static final Random random = new Random();
 
   public static void main(String[] args) {
@@ -22,46 +26,49 @@ public class DifferencialEvolution {
 
   private Individual init() {
     int numGen = 1;
-    int MAX_GEN = 100;
 
     List<Individual> popInd = generateRandomIndividuals();
     evaluateIndividuals(popInd);
 
     while (numGen <= MAX_GEN) {
-      List<Individual> newPop = new ArrayList<>(QTD_POP_INI);
+      List<Individual> newPop = new ArrayList<>(QTD_POP);
 
-      for (int i = 0; i < QTD_POP_INI; i++) {
+      for (int i = 0; i < QTD_POP; i++) {
         Individual u = generateUInd(popInd);
 
         Individual exp = recombine(popInd.get(i), u);
         exp.evaluate();
 
-        if (exp.getFunctionValue() < popInd.get(i).getFunctionValue()) {
+        if (popInd.get(i).dominates(exp.getFunctionValues())) {
+          newPop.add(popInd.get(i));
+        } else if (exp.dominates(popInd.get(i).getFunctionValues())) {
           newPop.add(exp);
         } else {
-          newPop.add(popInd.get(i));
+          newPop.add(getRandomInd(asList(popInd.get(i), exp)));
         }
       }
+
       popInd = newPop;
-      printIndividual(popInd, numGen);
       numGen++;
     }
 
-    Collections.sort(popInd);
+    printIndividuals(popInd);
     return popInd.get(0);
   }
 
-  private void printIndividual(List<Individual> popInd, int numGen) {
-    Individual betterInd = popInd.stream()
-            .min(Comparator.comparing(Individual::getFunctionValue))
-            .orElseThrow(NoSuchElementException::new);
+  private Individual getRandomInd(List<Individual> individuals) {
+    int pos = (int) Math.round(Math.random());
 
-    System.out.printf("Geração: %d - Melhor ind.: %f \n", numGen, betterInd.getFunctionValue());
+    return individuals.get(pos);
+  }
+
+  private void printIndividual(List<Individual> popInd, int numGen) {
+    System.out.printf("Geração: %d - indivíduos: %s \n", numGen, popInd.toString());
   }
 
   private List<Individual> generateRandomIndividuals() {
     List<Individual> individuals = new ArrayList<>();
-    for (int i = 0; i < QTD_POP_INI; i++) {
+    for (int i = 0; i < QTD_POP; i++) {
       individuals.add(new Individual(MIN_VALUE, MAX_VALUE));
     }
     return individuals;
@@ -75,15 +82,15 @@ public class DifferencialEvolution {
 
   private Individual generateUInd(List<Individual> popInd) {
     Individual u = new Individual();
-    int randomIndex1 = random.nextInt(QTD_POP_INI);
-    int randomIndex2 = random.nextInt(QTD_POP_INI);
-    int randomIndex3 = random.nextInt(QTD_POP_INI);
+    int randomIndex1 = random.nextInt(QTD_POP);
+    int randomIndex2 = random.nextInt(QTD_POP);
+    int randomIndex3 = random.nextInt(QTD_POP);
 
     Individual ind1 = popInd.get(randomIndex1);
     Individual ind2 = popInd.get(randomIndex2);
     Individual ind3 = popInd.get(randomIndex3);
 
-    double[] val = new double[2];
+    double[] val = new double[ind1.getGenes().length];
 
     for (int i = 0; i < val.length; i++) {
       val[i] = ind3.getGenes()[i] + (F * (ind1.getGenes()[i] - ind2.getGenes()[i]));
@@ -96,7 +103,7 @@ public class DifferencialEvolution {
   private Individual recombine(Individual individual, Individual u) {
     Individual son = new Individual(MIN_VALUE, MAX_VALUE);
 
-    for (int i = 0; i < 2; i++) {
+    for (int i = 0; i < individual.getGenes().length; i++) {
       double r = random.nextDouble();
 
       if (r < CROSSOVER_RATE) {
@@ -107,5 +114,10 @@ public class DifferencialEvolution {
     }
 
     return son;
+  }
+
+  private void printIndividuals(List<Individual> popInd) {
+    System.out.printf("Resultado do processamento após %d gerações: \n", MAX_GEN);
+    popInd.forEach(System.out::println);
   }
 }
