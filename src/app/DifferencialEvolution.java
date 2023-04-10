@@ -21,7 +21,7 @@ public class DifferencialEvolution {
     DifferencialEvolution diffEvol = new DifferencialEvolution();
     Individual bestIndividual = diffEvol.init();
 
-    System.out.println(bestIndividual);
+    //System.out.println(bestIndividual);
   }
 
   private Individual init() {

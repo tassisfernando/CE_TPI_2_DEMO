@@ -115,7 +115,9 @@ public class Individual implements Comparable<Individual> {
 
   @Override
   public String toString() {
-    return "\nAvaliação: " +
+    return "\nGenes: " +
+            Arrays.toString(this.genes) +
+          "\nAvaliação: " +
             Arrays.toString(this.functionValues);
   }
 }
